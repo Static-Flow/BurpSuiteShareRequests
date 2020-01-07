@@ -3,6 +3,7 @@ package sharerequests;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Base64;
 import java.util.Date;
 import java.util.StringTokenizer;
@@ -13,6 +14,7 @@ public class CustomURLServer implements Runnable {
     private final SharedValues sharedValues;
 
     private ServerSocket socket;
+    private boolean running;
 
     public CustomURLServer(SharedValues sharedValues) throws IOException {
         this.sharedValues = sharedValues;
@@ -21,11 +23,17 @@ public class CustomURLServer implements Runnable {
 
     @Override
     public void run() {
+        running = true;
         try {
-            handleConnection(socket.accept());
-        } catch (Exception tr) {
-            sharedValues.getCallbacks().printError("Could not start server: " + tr);
+            while (running) {
+                handleConnection(socket.accept());
+            }
+        } catch (SocketException tr) {
+            sharedValues.getCallbacks().printError("Inner Server Closed.");
+        } catch (IOException io) {
+            sharedValues.getCallbacks().printError("Exception in socket: " + io);
         }
+
     }
 
     private void handleConnection(Socket connection) {
@@ -93,4 +101,12 @@ public class CustomURLServer implements Runnable {
         return socket;
     }
 
+    void stopRunning() {
+        running = false;
+        try {
+            this.socket.close();
+        } catch (IOException e) {
+            sharedValues.getCallbacks().printError("Error closing socket");
+        }
+    }
 }

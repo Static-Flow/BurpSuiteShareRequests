@@ -15,6 +15,7 @@ public class BurpExtender
         iBurpExtenderCallbacks.addSuiteTab(this);
         iBurpExtenderCallbacks.registerContextMenuFactory(new ManualRequestSenderContextMenu(this.sharedValues));
         iBurpExtenderCallbacks.registerProxyListener(new ProxyListener(this.sharedValues));
+        iBurpExtenderCallbacks.registerExtensionStateListener(new ExtensionStateListener(this.sharedValues));
         CustomURLServer innerServer;
         try {
             innerServer = new CustomURLServer(sharedValues);
