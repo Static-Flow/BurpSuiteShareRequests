@@ -1,0 +1,12 @@
+Uuid: 30ec677a0f134150985b273d8c1dea22
+ExtensionType: 1
+Name: Burp Share Requests
+RepoName: burp-share-requests
+ScreenVersion: 1.0
+SerialVersion: 1
+MinPlatformVersion: 0
+ProOnly: False
+Author: Static-Flow
+ShortDescription: Enables the generation of shareable links to specific requests which other Burp Suite users can import.
+EntryPoint: target/BurpSuiteShareRequests.jar
+BuildCommand: mvn package
