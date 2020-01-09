@@ -5,6 +5,8 @@ import burp.IContextMenuInvocation;
 import burp.IHttpRequestResponse;
 
 import javax.swing.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -35,9 +37,11 @@ public class ManualRequestSenderContextMenu implements IContextMenuFactory {
             new SwingWorker<Boolean, Void>() {
                 @Override
                 public Boolean doInBackground() {
+                    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+                    LocalDateTime localDate = LocalDateTime.now();
                     httpRequestResponse.setRequest(message.getRequest());
                     httpRequestResponse.setHttpService(message.getHttpService());
-                    sharedValues.getSharedLinksModel().addBurpMessage(httpRequestResponse);
+                    sharedValues.getSharedLinksModel().addBurpMessage(httpRequestResponse, dtf.format(localDate));
                     JOptionPane.showMessageDialog(null, "Link has been generated! Goto the Burp Shared Requests tab to share it.");
                     return Boolean.TRUE;
                 }
@@ -55,7 +59,9 @@ public class ManualRequestSenderContextMenu implements IContextMenuFactory {
     public List<JMenuItem> createMenuItems(IContextMenuInvocation invocation) {
         ArrayList<JMenuItem> menues = new ArrayList<>();
         if (Objects.equals(IContextMenuInvocation.CONTEXT_MESSAGE_EDITOR_REQUEST, invocation.getInvocationContext()) ||
-                Objects.equals(IContextMenuInvocation.CONTEXT_MESSAGE_VIEWER_REQUEST, invocation.getInvocationContext())) {
+                Objects.equals(IContextMenuInvocation.CONTEXT_MESSAGE_VIEWER_REQUEST, invocation.getInvocationContext()) ||
+                Objects.equals(IContextMenuInvocation.CONTEXT_TARGET_SITE_MAP_TREE, invocation.getInvocationContext()) ||
+                Objects.equals(IContextMenuInvocation.CONTEXT_TARGET_SITE_MAP_TABLE, invocation.getInvocationContext())) {
             menues.addAll(createLinkMenu(invocation));
         }
         return menues;

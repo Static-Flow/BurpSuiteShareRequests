@@ -3,6 +3,7 @@ package sharerequests;
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -30,8 +31,10 @@ public class ExtensionPanel
         explainer.setHorizontalAlignment(SwingConstants.LEFT);
         infoPanel.add(explainer, BorderLayout.WEST);
         explainer.setText("<html>This extension allows you to create shareable links to Burp Suite requests. <br>" +
-                "When others visit the generated links with this extension installed the request as you shared it <br>" +
-                "will be imported into their repeater tab. </html>\n");
+                "When others visit the generated links, in a browser proxied by Burp Suite with this extension installed, <br>" +
+                "the request as you shared it will be imported into their repeater tab. <br> Links can be generated from" +
+                " right click context menus on requests in the following places: <br> <ul><li>Repeater Tab</li>" +
+                "<li>HTTP History Tab</li><li>Intercept Tab</li><li>Site Map Table and Tree</li></ul></html>\n");
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.fill = GridBagConstraints.BOTH;
         gridBagConstraints.insets = new Insets(5, 5, 5, 5);
@@ -49,6 +52,9 @@ public class ExtensionPanel
                 return getPreferredSize().width < getParent().getWidth();
             }
         };
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        j.getColumnModel().getColumn(1).setCellRenderer(centerRenderer);
         final JPopupMenu popupMenu = new JPopupMenu();
         popupMenu.addPopupMenuListener(new PopupMenuListener() {
 
@@ -114,7 +120,6 @@ public class ExtensionPanel
     private String generateHTMLLink(HttpRequestResponse burpMessage) {
         return "<a href='http://burpsharedrequest/" +
                 Base64.getEncoder().encodeToString(this.sharedValues.getGson().toJson(burpMessage).getBytes())
-                + "'>" + this.sharedValues.getCallbacks().getHelpers().analyzeRequest(burpMessage).getUrl().toString()
-                + "</a>";
+                + "'>http://burpsharedrequest/</a>";
     }
 }

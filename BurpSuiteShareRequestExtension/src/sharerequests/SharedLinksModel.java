@@ -7,47 +7,60 @@ import java.util.ArrayList;
 
 class SharedLinksModel extends AbstractTableModel {
 
-    private final ArrayList<HttpRequestResponse> httpRequestResponses;
+    private final ArrayList<SharedRequest> sharedRequests;
     private final IBurpExtenderCallbacks callbacks;
 
     SharedLinksModel(IBurpExtenderCallbacks callbacks) {
         this.callbacks = callbacks;
-        httpRequestResponses = new ArrayList<>();
+        sharedRequests = new ArrayList<>();
     }
 
-    void addBurpMessage(HttpRequestResponse burpMessage) {
-        httpRequestResponses.add(burpMessage);
+    void addBurpMessage(HttpRequestResponse burpMessage, String datetime) {
+        sharedRequests.add(new SharedRequest(burpMessage, datetime));
         fireTableDataChanged();
     }
 
     void removeBurpMessage(int rowIndex) {
-        httpRequestResponses.remove(rowIndex);
+        sharedRequests.remove(rowIndex);
         fireTableDataChanged();
     }
 
     @Override
     public int getRowCount() {
-        return httpRequestResponses.size();
+        return sharedRequests.size();
     }
 
     @Override
     public String getColumnName(int col) {
-        return "URL";
+        if (col == 0) {
+            return "URL";
+        } else {
+            return "Date Created";
+        }
     }
 
     @Override
     public int getColumnCount() {
-        return 1;
+        return 2;
     }
 
     @Override
-    public String getValueAt(int rowIndex, int columnIndex) {
-        return this.callbacks.getHelpers().analyzeRequest(
-                httpRequestResponses.get(rowIndex)).getUrl().toString();
+    public Object getValueAt(int row, int col) {
+        Object temp = null;
+        if (col == 0) {
+            temp = this.callbacks.getHelpers().analyzeRequest(sharedRequests.get(row).getRequestResponse()).getUrl().toString();
+        } else if (col == 1) {
+            temp = sharedRequests.get(row).getDatetime();
+        }
+        return temp;
     }
 
     HttpRequestResponse getBurpMessageAtIndex(int rowIndex) {
-        return httpRequestResponses.get(rowIndex);
+        return sharedRequests.get(rowIndex).getRequestResponse();
     }
 
+    @Override
+    public Class<?> getColumnClass(int columnIndex) {
+        return String.class;
+    }
 }
