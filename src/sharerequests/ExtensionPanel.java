@@ -7,7 +7,10 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Base64;
+import java.util.zip.GZIPOutputStream;
 
 public class ExtensionPanel
         extends JPanel {
@@ -92,8 +95,16 @@ public class ExtensionPanel
         JMenuItem getLinkItem = new JMenuItem("Get Link");
         getLinkItem.addActionListener(e -> {
             HttpRequestResponse burpMessage = ((SharedLinksModel) j.getModel()).getBurpMessageAtIndex(j.getSelectedRow());
-            StringSelection stringSelection = new StringSelection("http://burpsharedrequest/" +
-                    Base64.getEncoder().encodeToString(this.sharedValues.getGson().toJson(burpMessage).getBytes()));
+            StringSelection stringSelection = new StringSelection("");
+            try {
+                byte[] rawBytes;
+                rawBytes = stripBurpMessage(burpMessage);
+                stringSelection = new StringSelection(
+                        "burpsharedrequest/" +
+                                Base64.getEncoder().encodeToString(compress(new String(rawBytes))));
+            } catch (IOException ex) {
+                sharedValues.getCallbacks().printError(ex.getMessage());
+            }
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             clipboard.setContents(stringSelection, null);
             JOptionPane.showMessageDialog(null, "Link has been added to the clipboard");
@@ -115,6 +126,33 @@ public class ExtensionPanel
         add(pane, optionsPanelConstraints);
         //end shareable links
 
+    }
+
+    private byte[] stripBurpMessage(HttpRequestResponse burpMessage) throws IOException {
+        sharedValues.getCallbacks().printOutput(burpMessage.toString());
+        ByteArrayOutputStream myStream = new ByteArrayOutputStream();
+        byte divider = (byte) 127;
+        myStream.write(burpMessage.getRequest());
+        myStream.write(divider);
+        myStream.write(burpMessage.getResponse());
+        myStream.write(divider);
+        myStream.write(burpMessage.getHttpService().getHost().getBytes());
+        myStream.write(divider);
+        myStream.write(Integer.toString(burpMessage.getHttpService().getPort()).getBytes());
+        myStream.write(divider);
+        myStream.write(burpMessage.getHttpService().getProtocol().getBytes());
+        sharedValues.getCallbacks().printOutput(myStream.toString());
+        return myStream.toByteArray();
+    }
+
+    private static byte[] compress(String data) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(data.length());
+        GZIPOutputStream gzip = new GZIPOutputStream(bos);
+        gzip.write(data.getBytes());
+        gzip.close();
+        byte[] compressed = bos.toByteArray();
+        bos.close();
+        return compressed;
     }
 
     private String generateHTMLLink(HttpRequestResponse burpMessage) {

@@ -1,6 +1,6 @@
 package sharerequests;
 
-public class SharedRequest {
+class SharedRequest {
     private HttpRequestResponse requestResponse;
     private String datetime;
 
@@ -13,7 +13,7 @@ public class SharedRequest {
         return requestResponse;
     }
 
-    public String getDatetime() {
+    String getDatetime() {
         return datetime;
     }
 
