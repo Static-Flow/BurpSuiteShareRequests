@@ -2,7 +2,17 @@ package sharerequests;
 
 import burp.IHttpRequestResponse;
 import burp.IHttpService;
+import com.google.gson.Gson;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 public class HttpRequestResponse implements IHttpRequestResponse {
@@ -11,17 +21,9 @@ public class HttpRequestResponse implements IHttpRequestResponse {
     private byte[] response;
     private String comment;
     private String highlight;
-    private HttpService httpService;
+    private IHttpService httpService;
 
     HttpRequestResponse() {
-    }
-
-    public HttpRequestResponse(IHttpRequestResponse copy) {
-        this.request = copy.getRequest();
-        this.response = copy.getResponse();
-        this.comment = copy.getComment();
-        this.highlight = copy.getHighlight();
-        this.httpService = new HttpService(copy.getHttpService());
     }
 
     @Override
@@ -78,7 +80,30 @@ public class HttpRequestResponse implements IHttpRequestResponse {
 
     @Override
     public void setHttpService(IHttpService httpService) {
-        this.httpService = new HttpService(httpService);
+        this.httpService = httpService;
+    }
+
+    /**
+     * This method performs a nested set of steps to prepare a request for
+     * transmission to the API: request -> json -> gzip -> AES -> hex
+     * request : the bytes of this request
+     * json : json encode the request bytes
+     * gzip : gzip compress json
+     * AES : AES-128 encrypt the gzip blob
+     * hex : convert AES bytes to hex for easier transmission
+     * @param key user's AES encryption key
+     * @param iv user's IV value needed used for AES encryption
+     * @return converted Burp request
+     */
+    public String convertBurpMessageToString(SecretKey key,
+                                             IvParameterSpec iv) throws IOException,
+            NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException {
+        return Utils.bytesToHex(Utils.encrypt(Utils.compress(burpMessageToJson()),key,iv));
+    }
+
+    private byte[] burpMessageToJson() {
+        Gson gson = new Gson();
+        return gson.toJson(this).getBytes();
     }
 
     @Override

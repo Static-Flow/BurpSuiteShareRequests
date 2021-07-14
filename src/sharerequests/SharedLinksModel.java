@@ -15,13 +15,18 @@ class SharedLinksModel extends AbstractTableModel {
         sharedRequests = new ArrayList<>();
     }
 
-    void addBurpMessage(HttpRequestResponse burpMessage, String datetime) {
-        sharedRequests.add(new SharedRequest(burpMessage, datetime));
+    void addBurpMessage(SharedRequest shareable) {
+        sharedRequests.add(shareable);
         fireTableDataChanged();
     }
 
     void removeBurpMessage(int rowIndex) {
         sharedRequests.remove(rowIndex);
+        fireTableDataChanged();
+    }
+
+    void clearTable() {
+        sharedRequests.clear();
         fireTableDataChanged();
     }
 
@@ -33,9 +38,9 @@ class SharedLinksModel extends AbstractTableModel {
     @Override
     public String getColumnName(int col) {
         if (col == 0) {
-            return "URL";
+            return "Link To Share";
         } else {
-            return "Date Created";
+            return "Shared Request Url";
         }
     }
 
@@ -45,18 +50,16 @@ class SharedLinksModel extends AbstractTableModel {
     }
 
     @Override
-    public Object getValueAt(int row, int col) {
-        Object temp = null;
+    public String getValueAt(int row, int col) {
         if (col == 0) {
-            temp = this.callbacks.getHelpers().analyzeRequest(sharedRequests.get(row).getRequestResponse()).getUrl().toString();
-        } else if (col == 1) {
-            temp = sharedRequests.get(row).getDatetime();
+            return sharedRequests.get(row).getShareableUrl();
+        } else {
+            return sharedRequests.get(row).getDescription();
         }
-        return temp;
     }
 
-    HttpRequestResponse getBurpMessageAtIndex(int rowIndex) {
-        return sharedRequests.get(rowIndex).getRequestResponse();
+    SharedRequest getShareableAtIndex(int rowIndex) {
+        return sharedRequests.get(rowIndex);
     }
 
     @Override

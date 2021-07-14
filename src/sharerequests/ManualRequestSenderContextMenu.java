@@ -5,13 +5,19 @@ import burp.IContextMenuInvocation;
 import burp.IHttpRequestResponse;
 
 import javax.swing.*;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Handles the context menus used to send requests to the Share extension.
+ * Currently a user can send a request to be shared in the following spots:
+ * +Repeater Tab
+ * +HTTP History Tab
+ * +Intercept Tab
+ * +Site Map Table and Tree
+ */
 public class ManualRequestSenderContextMenu implements IContextMenuFactory {
 
     private final SharedValues sharedValues;
@@ -30,6 +36,13 @@ public class ManualRequestSenderContextMenu implements IContextMenuFactory {
         return menuList;
     }
 
+    /**
+     * When a user clicks the "create link" button the selected request is
+     * converted into an encrypted and shareable format and sent via the API
+     * to be stored. The API returns a shareable link that users can give to
+     * others.
+     * @param invocation The Burp Request to generate a shareable link to
+     */
     private void createLinkForSelectedRequests(IContextMenuInvocation invocation) {
         HttpRequestResponse httpRequestResponse =
                 new HttpRequestResponse();
@@ -37,12 +50,16 @@ public class ManualRequestSenderContextMenu implements IContextMenuFactory {
             new SwingWorker<Boolean, Void>() {
                 @Override
                 public Boolean doInBackground() {
-                    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
-                    LocalDateTime localDate = LocalDateTime.now();
                     httpRequestResponse.setRequest(message.getRequest());
                     httpRequestResponse.setHttpService(message.getHttpService());
-                    sharedValues.getSharedLinksModel().addBurpMessage(httpRequestResponse, dtf.format(localDate));
-                    JOptionPane.showMessageDialog(null, "Link has been generated! Goto the Burp Shared Requests tab to share it.");
+                    try {
+                        SharedRequest shareable =
+                                sharedValues.getCognitoClient().sendMessage(httpRequestResponse);
+                        sharedValues.getSharedLinksModel().addBurpMessage(shareable);
+                        JOptionPane.showMessageDialog(null, "Link has been generated! Goto the Burp Shared Requests tab to share it.");
+                    } catch (Exception e) {
+                        sharedValues.getCallbacks().printError(e.getMessage());
+                    }
                     return Boolean.TRUE;
                 }
 
